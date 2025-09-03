@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prehistorik 2 - Réplica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(to bottom, #1a5c34, #0c351f);
+            font-family: 'Press Start 2P', cursive, Arial, sans-serif;
+            color: #f5d547;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            overflow: hidden;
+            border: 5px solid #f5d547;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+        }
+        
+        #game-canvas {
+            background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui-container {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #f5d547;
+        }
+        
+        .ui-item {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ui-icon {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+            background-color: #f5d547;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #f5d547;
+        }
+        
+        #title {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+            color: #f5d547;
+            letter-spacing: 2px;
+        }
+        
+        #start-screen, #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+        
+        #game-over {
+            display: none;
+        }
+        
+        button {
+            background: #f5d547;
+            color: #1a5c34;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-family: 'Press Start 2P', cursive;
+            margin-top: 30px;
+            cursor: pointer;
+            border-radius: 8px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #ffea80;
+            transform: scale(1.05);
+        }
+        
+        .pixel-art {
+            image-rendering: pixelated;
+        }
+        
+        #instructions {
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.6;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        #score-display {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #f5d547;
+            z-index: 10;
+        }
+        
+        .key {
+            display: inline-block;
+            background: #f5d547;
+            color: #1a5c34;
+            padding: 5px 10px;
+            margin: 0 5px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1 id="title">PREHISTORIK 2</h1>
+    
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="500"></canvas>
+        
+        <div id="ui-container">
+            <div class="ui-item">
+                <div class="ui-icon">🍗</div>
+                <span id="food-count">0</span>
+            </div>
+            <div class="ui-item">
+                <div class="ui-icon">⭐</div>
+                <span id="score">0</span>
+            </div>
+            <div class="ui-item">
+                <div class="ui-icon">❤️</div>
+                <span id="lives">3</span>
+            </div>
+        </div>
+        
+        <div id="score-display">
+            PUNTUACIÓN: <span id="total-score">0</span>
+        </div>
+        
+        <div id="start-screen">
+            <h2>¡CAZA PREHISTÓRICA!</h2>
+            <p>Ayuda a Tom el cavernícola a recolectar alimentos</p>
+            <button id="start-button">JUGAR</button>
+            <div id="instructions">
+                <p>Usa las flechas <span class="key">←</span> <span class="key">→</span> para moverte y <span class="key">↑</span> para saltar</p>
+                <p>Recolecta alimentos y evita a los enemigos</p>
+            </div>
+        </div>
+        
+        <div id="game-over">
+            <h2>¡FIN DEL JUEGO!</h2>
+            <p>Tu puntuación: <span id="final-score">0</span></p>
+            <button id="restart-button">JUGAR DE NUEVO</button>
+        </div>
+    </div>
+    
+    <div id="controls">
+        <p>Controles: <span class="key">←</span> <span class="key">→</span> para moverse | <span class="key">↑</span> para saltar | <span class="key">ESPACIO</span> para atacar</p>
+    </div>
+
+    <script>
+        // Variables del juego
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        let gameRunning = false;
+        let score = 0;
+        let lives = 3;
+        let foodCollected = 0;
+        
+        // Elementos de UI
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const scoreDisplay = document.getElementById('score');
+        const foodCount = document.getElementById('food-count');
+        const livesDisplay = document.getElementById('lives');
+        const totalScoreDisplay = document.getElementById('total-score');
+        const finalScoreDisplay = document.getElementById('final-score');
+        
+        // Jugador
+        const player = {
+            x: 100,
+            y: 380,
+            width: 50,
+            height: 70,
+            speed: 5,
+            velX: 0,
+            velY: 0,
+            jumping: false,
+            grounded: false,
+            color: '#8B4513',
+            direction: 1 // 1: derecha, -1: izquierda
+        };
+        
+        // Gravedad
+        const gravity = 0.5;
+        const friction = 0.8;
+        
+        // Plataformas
+        const platforms = [
+            {x: 0, y: 450, width: 800, height: 50, color: '#8B4513'}, // Suelo principal
+            {x: 200, y: 350, width: 100, height: 20, color: '#8B4513'},
+            {x: 400, y: 300, width: 100, height: 20, color: '#8B4513'},
+            {x: 600, y: 250, width: 100, height: 20, color: '#8B4513'}
+        ];
+        
+        // Comida
+        const foods = [
+            {x: 250, y: 310, width: 30, height: 30, color: '#FF4500', type: 'meat', collected: false},
+            {x: 450, y: 260, width: 30, height: 30, color: '#FFD700', type: 'fruit', collected: false},
+            {x: 650, y: 210, width: 30, height: 30, color: '#FF6347', type: 'meat', collected: false},
+            {x: 300, y: 410, width: 30, height: 30, color: '#32CD32', type: 'vegetable', collected: false},
+            {x: 500, y: 410, width: 30, height: 30, color: '#FFD700', type: 'fruit', collected: false}
+        ];
+        
+        // Enemigos
+        const enemies = [
+            {x: 300, y: 410, width: 40, height: 40, color: '#FF0000', speed: 2, direction: 1},
+            {x: 600, y: 410, width: 40, height: 40, color: '#A52A2A', speed: 3, direction: -1}
+        ];
+        
+        // Teclas
+        const keys = {};
+        
+        // Iniciar juego
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+        
+        function startGame() {
+            gameRunning = true;
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            // Reiniciar valores
+            score = 0;
+            lives = 3;
+            foodCollected = 0;
+            player.x = 100;
+            player.y = 380;
+            player.velX = 0;
+            player.velY = 0;
+            player.jumping = false;
+            
+            // Reiniciar comida
+            foods.forEach(food => {
+                food.collected = false;
+            });
+            
+            // Reiniciar enemigos
+            enemies[0] = {x: 300, y: 410, width: 40, height: 40, color: '#FF0000', speed: 2, direction: 1};
+            enemies[1] = {x: 600, y: 410, width: 40, height: 40, color: '#A52A2A', speed: 3, direction: -1};
+            
+            updateUI();
+            gameLoop();
+        }
+        
+        // Actualizar UI
+        function updateUI() {
+            scoreDisplay.textContent = score;
+            foodCount.textContent = foodCollected;
+            livesDisplay.textContent = lives;
+            totalScoreDisplay.textContent = score;
+        }
+        
+        // Bucle principal del juego
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            // Limpiar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Dibujar fondo
+            drawBackground();
+            
+            // Actualizar y dibujar plataformas
+            platforms.forEach(platform => {
+                drawPlatform(platform);
+            });
+            
+            // Actualizar y dibujar comida
+            foods.forEach(food => {
+                if (!food.collected) {
+                    drawFood(food);
+                    checkFoodCollision(food);
+                }
+            });
+            
+            // Actualizar y dibujar enemigos
+            enemies.forEach(enemy => {
+                updateEnemy(enemy);
+                drawEnemy(enemy);
+                checkEnemyCollision(enemy);
+            });
+            
+            // Aplicar gravedad al jugador
+            if (player.jumping) {
+                player.velY += gravity;
+            }
+            
+            // Aplicar fricción en el eje X
+            player.velX *= friction;
+            
+            // Actualizar posición del jugador
+            player.x += player.velX;
+            player.y += player.velY;
+            
+            // Verificar colisiones con plataformas
+            player.grounded = false;
+            platforms.forEach(platform => {
+                checkPlatformCollision(platform);
+            });
+            
+            // Limitar al jugador dentro del canvas
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+            if (player.y > canvas.height) {
+                player.y = canvas.height;
+                player.velY = 0;
+                player.jumping = false;
+                player.grounded = true;
+            }
+            
+            // Dibujar jugador
+            drawPlayer();
+            
+            // Verificar si el juego ha terminado
+            if (lives <= 0) {
+                gameOver();
+                return;
+            }
+            
+            // Continuar el bucle
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Dibujar fondo
+        function drawBackground() {
+            // Cielo
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Sol
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(700, 80, 40, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Montañas
+            ctx.fillStyle = '#2F4F4F';
+            ctx.beginPath();
+            ctx.moveTo(0, 450);
+            ctx.lineTo(0, 250);
+            ctx.lineTo(150, 450);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(100, 450);
+            ctx.lineTo(100, 200);
+            ctx.lineTo(250, 450);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(650, 450);
+            ctx.lineTo(550, 300);
+            ctx.lineTo(750, 450);
+            ctx.fill();
+            
+            // Árboles
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(50, 350, 20, 100);
+            ctx.fillRect(750, 400, 20, 50);
+            
+            ctx.fillStyle = '#2E8B57';
+            ctx.beginPath();
+            ctx.moveTo(30, 350);
+            ctx.lineTo(60, 280);
+            ctx.lineTo(90, 350);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(730, 400);
+            ctx.lineTo(760, 340);
+            ctx.lineTo(790, 400);
+            ctx.fill();
+            
+            // Nubes
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(200, 100, 20, 0, Math.PI * 2);
+            ctx.arc(230, 90, 25, 0, Math.PI * 2);
+            ctx.arc(260, 100, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(500, 70, 25, 0, Math.PI * 2);
+            ctx.arc(530, 60, 30, 0, Math.PI * 2);
+            ctx.arc(560, 70, 25, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Dibujar jugador
+        function drawPlayer() {
+            // Cuerpo
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Cara
+            ctx.fillStyle = '#FFEBCD';
+            ctx.fillRect(player.x + 10, player.y + 10, 30, 25);
+            
+            // Ojos
+            ctx.fillStyle = '#000';
+            ctx.fillRect(player.x + 15, player.y + 15, 5, 5);
+            ctx.fillRect(player.x + 30, player.y + 15, 5, 5);
+            
+            // Boca
+            ctx.fillStyle = '#FF4500';
+            ctx.fillRect(player.x + 20, player.y + 25, 10, 5);
+            
+            // Pelo
+            ctx.fillStyle = '#000';
+            ctx.fillRect(player.x + 5, player.y, 40, 10);
+            
+            // Brazos
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x - 10, player.y + 15, 10, 10);
+            ctx.fillRect(player.x + player.width, player.y + 15, 10, 10);
+            
+            // Piernas
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x + 5, player.y + player.height, 15, 5);
+            ctx.fillRect(player.x + 30, player.y + player.height, 15, 5);
+            
+            // Garrote
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(player.x + player.width, player.y + 10, 5, 30);
+            ctx.fillStyle = '#D2691E';
+            ctx.fillRect(player.x + player.width, player.y, 15, 10);
+        }
+        
+        // Dibujar plataforma
+        function drawPlatform(platform) {
+            ctx.fillStyle = platform.color;
+            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            
+            // Textura de tierra
+            ctx.fillStyle = '#5D4037';
+            for (let i = 0; i < platform.width; i += 10) {
+                ctx.fillRect(platform.x + i, platform.y, 2, 2);
+            }
+        }
+        
+        // Dibujar comida
+        function drawFood(food) {
+            ctx.fillStyle = food.color;
+            
+            if (food.type === 'meat') {
+                // Dibujar hueso o carne
+                ctx.fillRect(food.x, food.y, food.width, food.height);
+                ctx.fillStyle = '#FFF';
+                ctx.fillRect(food.x + 5, food.y + 10, 20, 10);
+            } else if (food.type === 'fruit') {
+                // Dibujar fruta
+                ctx.beginPath();
+                ctx.arc(food.x + food.width/2, food.y + food.height/2, food.width/2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Tallo
+                ctx.fillStyle = '#556B2F';
+                ctx.fillRect(food.x + food.width/2 - 2, food.y - 5, 4, 5);
+            } else {
+                // Dibujar vegetal
+                ctx.beginPath();
+                ctx.ellipse(food.x + food.width/2, food.y + food.height/2, food.width/2, food.height/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Dibujar enemigo
+        function drawEnemy(enemy) {
+            // Cuerpo
+            ctx.fillStyle = enemy.color;
+            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            
+            // Ojos
+            ctx.fillStyle = '#FFF';
+            ctx.fillRect(enemy.x + 5, enemy.y + 10, 8, 8);
+            ctx.fillRect(enemy.x + enemy.width - 13, enemy.y + 10, 8, 8);
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(enemy.x + 7, enemy.y + 12, 4, 4);
+            ctx.fillRect(enemy.x + enemy.width - 11, enemy.y + 12, 4, 4);
+            
+            // Boca
+            ctx.fillStyle = '#000';
+            ctx.fillRect(enemy.x + 10, enemy.y + 25, enemy.width - 20, 5);
+            
+            // Pinchos
+            ctx.fillStyle = enemy.color;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(enemy.x + (i * 8) + 5, enemy.y);
+                ctx.lineTo(enemy.x + (i * 8), enemy.y - 10);
+                ctx.lineTo(enemy.x + (i * 8) + 10, enemy.y - 10);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+        
+        // Actualizar enemigo
+        function updateEnemy(enemy) {
+            enemy.x += enemy.speed * enemy.direction;
+            
+            // Cambiar dirección si llega al borde
+            if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
+                enemy.direction *= -1;
+            }
+        }
+        
+        // Verificar colisión con plataforma
+        function checkPlatformCollision(platform) {
+            if (player.x + player.width > platform.x && 
+                player.x < platform.x + platform.width &&
+                player.y + player.height > platform.y && 
+                player.y + player.height < platform.y + platform.height) {
+                player.y = platform.y - player.height;
+                player.velY = 0;
+                player.jumping = false;
+                player.grounded = true;
+            }
+        }
+        
+        // Verificar colisión con comida
+        function checkFoodCollision(food) {
+            if (player.x + player.width > food.x && 
+                player.x < food.x + food.width &&
+                player.y + player.height > food.y && 
+                player.y < food.y + food.height) {
+                food.collected = true;
+                foodCollected++;
+                score += 100;
+                updateUI();
+            }
+        }
+        
+        // Verificar colisión con enemigo
+        function checkEnemyCollision(enemy) {
+            if (player.x + player.width > enemy.x && 
+                player.x < enemy.x + enemy.width &&
+                player.y + player.height > enemy.y && 
+                player.y < enemy.y + enemy.height) {
+                lives--;
+                updateUI();
+                
+                // Hacer que el jugador rebote
+                player.velY = -10;
+                
+                if (lives <= 0) {
+                    gameOver();
+                }
+            }
+        }
+        
+        // Game Over
+        function gameOver() {
+            gameRunning = false;
+            finalScoreDisplay.textContent = score;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Event listeners para teclado
+        document.addEventListener('keydown', function(e) {
+            keys[e.keyCode] = true;
+            
+            // Salto
+            if (e.keyCode === 38 && !player.jumping && player.grounded) {
+                player.jumping = true;
+                player.grounded = false;
+                player.velY = -12;
+            }
+        });
+        
+        document.addEventListener('keyup', function(e) {
+            keys[e.keyCode] = false;
+        });
+        
+        // Movimiento del jugador
+        function handlePlayerMovement() {
+            if (!gameRunning) return;
+            
+            // Movimiento izquierda
+            if (keys[37]) {
+                if (player.velX > -player.speed) {
+                    player.velX--;
+                }
+                player.direction = -1;
+            }
+            
+            // Movimiento derecha
+            if (keys[39]) {
+                if (player.velX < player.speed) {
+                    player.velX++;
+                }
+                player.direction = 1;
+            }
+        }
+        
+        // Actualizar movimiento del jugador
+        setInterval(handlePlayerMovement, 10);
+    </script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Mario Bros</title>
+  <style>
+    body {
+      background: #87CEEB;
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #5c94fc;
+      border: 4px solid #222;
+      box-shadow: 0 0 20px #222;
+    }
+    #instructions {
+      text-align: center;
+      margin-top: 16px;
+      font-family: Arial, sans-serif;
+      color: #222;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="640" height="360"></canvas>
+  <div id="instructions">
+    Usa ← → para moverte, ↑ para saltar. ¡Atrapa la moneda!
+  </div>
+  <script>
+    // Parámetros del juego
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const GRAVITY = 0.7;
+    const FLOOR = canvas.height - 40;
+    const keys = {};
+
+    // Jugador estilo Mario
+    const player = {
+      x: 60,
+      y: FLOOR,
+      width: 32,
+      height: 32,
+      color: '#e82929',
+      vx: 0,
+      vy: 0,
+      speed: 4,
+      jumping: false,
+      onGround: true,
+      frame: 0
+    };
+
+    // Plataforma simple
+    const platforms = [
+      {x: 0, y: FLOOR, width: canvas.width, height: 40, color: "#6b8e23"},
+      {x: 220, y: FLOOR-60, width: 100, height: 20, color: "#a0522d"},
+      {x: 370, y: FLOOR-120, width: 120, height: 20, color: "#a0522d"},
+    ];
+
+    // Moneda coleccionable
+    const coin = {
+      x: 410,
+      y: FLOOR-160,
+      radius: 14,
+      color: "#FFD700",
+      taken: false
+    };
+
+    // Control de teclas
+    document.addEventListener('keydown', e => {
+      keys[e.key] = true;
+    });
+    document.addEventListener('keyup', e => {
+      keys[e.key] = false;
+    });
+
+    function drawPlayer() {
+      // Cuerpo
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      // Gorro
+      ctx.fillStyle = 'blue';
+      ctx.fillRect(player.x, player.y, player.width, player.height/2);
+      // Cara
+      ctx.fillStyle = '#fff3c5';
+      ctx.fillRect(player.x + 7, player.y + 10, 18, 10);
+      // Bigote
+      ctx.fillStyle = '#222';
+      ctx.fillRect(player.x + 13, player.y + 20, 6, 3);
+    }
+
+    function drawCoin() {
+      if (!coin.taken) {
+        ctx.beginPath();
+        ctx.arc(coin.x, coin.y, coin.radius, 0, 2 * Math.PI);
+        ctx.fillStyle = coin.color;
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ffec8b';
+        ctx.stroke();
+      }
+    }
+
+    function drawPlatforms() {
+      platforms.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.width, p.height);
+      });
+    }
+
+    function collidePlatform(px, py, pw, ph, plat) {
+      return px < plat.x + plat.width &&
+             px + pw > plat.x &&
+             py < plat.y + plat.height &&
+             py + ph > plat.y;
+    }
+
+    function updatePlayer() {
+      // Movimiento horizontal
+      if (keys['ArrowLeft']) player.vx = -player.speed;
+      else if (keys['ArrowRight']) player.vx = player.speed;
+      else player.vx = 0;
+
+      // Saltar
+      if (keys['ArrowUp'] && player.onGround) {
+        player.vy = -12;
+        player.jumping = true;
+        player.onGround = false;
+      }
+
+      // Física
+      player.vy += GRAVITY;
+      player.x += player.vx;
+      player.y += player.vy;
+
+      // Limites de pantalla
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+      // Colisión con plataformas
+      player.onGround = false;
+      for (let p of platforms) {
+        if (collidePlatform(player.x, player.y, player.width, player.height, p)) {
+          // Solo colisión por abajo
+          if (player.y + player.height - player.vy <= p.y) {
+            player.y = p.y - player.height;
+            player.vy = 0;
+            player.jumping = false;
+            player.onGround = true;
+          }
+        }
+      }
+
+      // Colisión con moneda
+      if (!coin.taken) {
+        const dx = (player.x + player.width/2) - coin.x;
+        const dy = (player.y + player.height/2) - coin.y;
+        if (Math.sqrt(dx*dx + dy*dy) < player.width/2 + coin.radius) {
+          coin.taken = true;
+          setTimeout(() => alert('¡Has ganado!'), 300);
+        }
+      }
+
+      // No caer por debajo del suelo
+      if (player.y + player.height > canvas.height) {
+        player.y = FLOOR;
+        player.vy = 0;
+        player.jumping = false;
+        player.onGround = true;
+      }
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawPlatforms();
+      drawCoin();
+      drawPlayer();
+      updatePlayer();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
